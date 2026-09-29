@@ -2,11 +2,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from app.database import SessionLocal
+from database import SessionLocal
+from models import Doctor, DoctorSlot
 
 router = APIRouter(
-    prefix="/api/v1",
-    tags=["v1"],
+    tags=["Doctors"],
 )
 
 
@@ -21,15 +21,32 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
-@router.get("/doctors", status_code=status.HTTP_200_OK)
+@router.get("/Doctors", status_code=status.HTTP_200_OK)
 def get_doctors(db: db_dependency):
-    result = db.execute(text("SELECT * FROM doctors ORDER BY id"))
-    doctors = result.mappings().all()
-
-    if not doctors:
+    result = db.query(Doctor).all()
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctors not found",
+        )
+    return result
+   
+@router.get("/Doctors/{id}", status_code=status.HTTP_200_OK)
+def get_doctor_by_id(db: db_dependency ,id: int):
+    result = db.query(Doctor).filter(Doctor.id == id).first()
+    if result is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Doctor not found",
         )
+    return result
 
-    return [dict(doctor) for doctor in doctors]
+@router.get("/Doctors/{id}/slots", status_code=status.HTTP_200_OK)
+def get_doctor_slots_by_id(db: db_dependency ,id: int):
+    result = db.query(DoctorSlot).filter(DoctorSlot.doctor_id == id).all()
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor not found",
+        )
+    return result

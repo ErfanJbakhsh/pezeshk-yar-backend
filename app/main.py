@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import doctors
+from routes import doctors
 
 
 app = FastAPI()
