@@ -17,7 +17,7 @@ router = APIRouter(
 )
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated= 'auto')
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl='/auth/token') 
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl='/auth/login') 
 
 class UserCreate(BaseModel):
     full_name: str = Field(min_length=2, max_length=100)

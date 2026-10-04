@@ -1,8 +1,9 @@
 from fastapi import FastAPI
-from routes import doctors, auth
+from routes import doctors, auth, appointments
 
 
 app = FastAPI()
 
 app.include_router(doctors.router)
 app.include_router(auth.router)
+app.include_router(appointments.router)
