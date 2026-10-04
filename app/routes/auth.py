@@ -13,6 +13,7 @@ from jose import jwt, JWTError
 
 router = APIRouter(
     tags=["Auth"],
+    prefix="/auth"
 )
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated= 'auto')
@@ -46,31 +47,6 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
-@router.post("/auth", status_code= status.HTTP_201_CREATED)
-async def create_user(db: db_dependency, user_form: UserCreate):
-    new_user = User(
-        full_name = user_form.full_name,
-        username = user_form.username,
-        password_hash = bcrypt_context.hash(user_form.password)
-    )
-
-    db.add(new_user)
-    db.commit()
-
-@router.post("/token")
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
-    user = authenticate_user(form_data.username, form_data.password, db)
-    if not user: 
-        raise HTTPException(status_code= 401, detail= "Could not validate user")
-    token = create_access_token(user.username, user.id, timedelta(minutes=20))
-    return {"access_token": token, "token_type": "bearer"}
-
-@router.get("/users")
-async def get_users(db: db_dependency):
-    users = db.query(User).all()
-    if not users:
-        raise HTTPException(status_code= 404, detail= "No user found")
-    return users 
 
 def authenticate_user(username: str, password: str, db: db_dependency):
     user = db.query(User).filter(User.username == username).first()
@@ -96,4 +72,31 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         return {'username': username, 'id': user_id}
     except JWTError:
         raise HTTPException(status_code= 401, detail= "Could not validate user")
+
+
+@router.post("/register", status_code= status.HTTP_201_CREATED)
+async def register(db: db_dependency, user_form: UserCreate):
+    new_user = User(
+        full_name = user_form.full_name,
+        username = user_form.username,
+        password_hash = bcrypt_context.hash(user_form.password)
+    )
+
+    db.add(new_user)
+    db.commit()
+
+@router.post("/login")
+async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
+    user = authenticate_user(form_data.username, form_data.password, db)
+    if not user: 
+        raise HTTPException(status_code= 401, detail= "Could not validate user")
+    token = create_access_token(user.username, user.id, timedelta(minutes=20))
+    return {"access_token": token, "token_type": "bearer"}
+
+@router.get("/users")
+async def get_users(db: db_dependency):
+    users = db.query(User).all()
+    if not users:
+        raise HTTPException(status_code= 404, detail= "No user found")
+    return users 
 

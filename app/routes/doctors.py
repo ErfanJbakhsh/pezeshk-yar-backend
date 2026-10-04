@@ -7,6 +7,7 @@ from models import Doctor, DoctorSlot
 
 router = APIRouter(
     tags=["Doctors"],
+    prefix="/doctors"
 )
 
 
@@ -21,7 +22,7 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
-@router.get("/Doctors", status_code=status.HTTP_200_OK)
+@router.get("", status_code=status.HTTP_200_OK)
 async def get_doctors(db: db_dependency):
     result = db.query(Doctor).all()
     if not result:
@@ -31,7 +32,7 @@ async def get_doctors(db: db_dependency):
         )
     return result
    
-@router.get("/Doctors/{id}", status_code=status.HTTP_200_OK)
+@router.get("/{id}", status_code=status.HTTP_200_OK)
 async def get_doctor_by_id(db: db_dependency ,id: int):
     result = db.query(Doctor).filter(Doctor.id == id).first()
     if result is None:
@@ -41,7 +42,7 @@ async def get_doctor_by_id(db: db_dependency ,id: int):
         )
     return result
 
-@router.get("/Doctors/{id}/slots", status_code=status.HTTP_200_OK)
+@router.get("/{id}/slots", status_code=status.HTTP_200_OK)
 async def get_doctor_slots_by_id(db: db_dependency ,id: int):
     result = db.query(DoctorSlot).filter(DoctorSlot.doctor_id == id).all()
     if result is None:
