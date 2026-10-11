@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Appointment, DoctorSlot
 from .auth import get_current_user
+from datetime import datetime, timezone
 
 router = APIRouter(
     tags=["Appointments"],
@@ -50,6 +51,24 @@ async def set_appointment(db: db_dependency, user: user_dependency, slot_id: int
     slot.is_active = False
 
     db.add(appointment)
+    db.commit()
+    db.refresh(appointment)
+    return appointment
+
+@router.patch("/{appointment_id}/cancel", status_code=status.HTTP_200_OK)
+def cancel_appointment(appointment_id: int, db: db_dependency, user: user_dependency):
+    appointment = db.query(Appointment).filter(
+        Appointment.id == appointment_id,
+        Appointment.user_id == user["id"],
+    ).first()
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+    if appointment.status != "confirmed":
+        raise HTTPException(status_code=400, detail="Only confirmed appointments can be cancelled")
+
+    appointment.status = "cancelled"
+    appointment.cancelled_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(appointment)
     return appointment
